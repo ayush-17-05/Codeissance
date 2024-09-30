@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CareMate: Find and Add Trusted Caregivers for Elderly Assistance</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            line-height: 1.6;
+            color: #333;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+        }
+        .container {
+            width: 90%;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        header {
+            background-color: #3498db;
+            color: #fff;
+            padding: 1rem 0;
+            text-align: center;
+        }
+        h1, h2 {
+            margin-bottom: 0.5rem;
+        }
+        .search-container, .add-caregiver-container {
+            margin: 2rem 0;
+            text-align: center;
+        }
+        #search, .input-field {
+            width: 100%;
+            max-width: 400px;
+            padding: 10px;
+            font-size: 16px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin-bottom: 10px;
+        }
+        #caregivers-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 20px;
+        }
+        .caregiver-card {
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            padding: 20px;
+            text-align: center;
+        }
+        .caregiver-card img {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            object-fit: cover;
+            margin-bottom: 10px;
+        }
+        .btn {
+            background-color: #2ecc71;
+            color: #fff;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        .btn:hover {
+            background-color: #27ae60;
+        }
+        #message {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+            border-radius: 4px;
+            padding: 10px;
+            margin-bottom: 20px;
+            display: none;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.4);
+        }
+        .modal-content {
+            background-color: #fefefe;
+            margin: 15% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+            max-width: 500px;
+        }
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .close:hover,
+        .close:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1>CareConnect</h1>
+            <p>Find and Add Trusted Caregivers for Elderly Assistance</p>
+        </div>
+    </header>
+
+    <main class="container">
+        <div class="search-container">
+            <input type="text" id="search" placeholder="Search caregivers by name or role...">
+        </div>
+
+        <div id="message"></div>
+
+        <div id="caregivers-grid"></div>
+
+        <div class="add-caregiver-container">
+            <button id="add-caregiver-btn" class="btn">Add New Caregiver</button>
+        </div>
+    </main>
+
+    <div id="add-caregiver-modal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Add New Caregiver</h2>
+            <input type="text" id="new-name" class="input-field" placeholder="Name" required>
+            <input type="text" id="new-role" class="input-field" placeholder="Role" required>
+            <input type="number" id="new-rating" class="input-field" placeholder="Rating (0-5)" min="0" max="5" step="0.1" required>
+            <input type="text" id="new-experience" class="input-field" placeholder="Experience (e.g., 5 years)" required>
+            <button id="submit-caregiver" class="btn">Add Caregiver</button>
+        </div>
+    </div>
+
+    <script>
+        let caregivers = [
+            { id: 1, name: 'Alice Johnson', role: 'Registered Nurse', rating: 4.8, experience: '10 years', image: 'https://via.placeholder.com/100' },
+            { id: 2, name: 'Bob Smith', role: 'Certified Caregiver', rating: 4.6, experience: '5 years', image: 'https://via.placeholder.com/100' },
+            { id: 3, name: 'Carol Davis', role: 'Licensed Practical Nurse', rating: 4.9, experience: '8 years', image: 'https://via.placeholder.com/100' },
+            { id: 4, name: 'David Wilson', role: 'Home Health Aide', rating: 4.7, experience: '3 years', image: 'https://via.placeholder.com/100' },
+        ];
+
+        function renderCaregivers(caregivers) {
+            const grid = document.getElementById('caregivers-grid');
+            grid.innerHTML = '';
+            caregivers.forEach(caregiver => {
+                const card = document.createElement('div');
+                card.className = 'caregiver-card';
+                card.innerHTML = `
+                    <img src="${caregiver.image}" alt="${caregiver.name}">
+                    <h3>${caregiver.name}</h3>
+                    <p>${caregiver.role}</p>
+                    <p>Rating: ${caregiver.rating}</p>
+                    <p>${caregiver.experience} experience</p>
+                    <button class="btn hire-btn" onclick="hireCaregiever(${caregiver.id})">Hire ${caregiver.name}</button>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        function hireCaregiever(id) {
+            const caregiver = caregivers.find(c => c.id === id);
+            showMessage(`You've hired ${caregiver.name}! They will be notified and contact you shortly.`);
+            
+            // Simulating sending a notification to the caregiver
+            console.log(`Notification sent to ${caregiver.name}: You've been hired through CareConnect!`);
+        }
+
+        function showMessage(text) {
+            const message = document.getElementById('message');
+            message.textContent = text;
+            message.style.display = 'block';
+            setTimeout(() => {
+                message.style.display = 'none';
+            }, 5000);
+        }
+
+        document.getElementById('search').addEventListener('input', function(e) {
+            const searchTerm = e.target.value.toLowerCase();
+            const filteredCaregivers = caregivers.filter(caregiver => 
+                caregiver.name.toLowerCase().includes(searchTerm) ||
+                caregiver.role.toLowerCase().includes(searchTerm)
+            );
+            renderCaregivers(filteredCaregivers);
+        });
+
+        // Modal functionality
+        const modal = document.getElementById("add-caregiver-modal");
+        const btn = document.getElementById("add-caregiver-btn");
+        const span = document.getElementsByClassName("close")[0];
+
+        btn.onclick = function() {
+            modal.style.display = "block";
+        }
+
+        span.onclick = function() {
+            modal.style.display = "none";
+        }
+
+        window.onclick = function(event) {
+            if (event.target == modal) {
+                modal.style.display = "none";
+            }
+        }
+
+        document.getElementById('submit-caregiver').addEventListener('click', function() {
+            const name = document.getElementById('new-name').value;
+            const role = document.getElementById('new-role').value;
+            const rating = parseFloat(document.getElementById('new-rating').value);
+            const experience = document.getElementById('new-experience').value;
+
+            if (name && role && rating && experience) {
+                const newCaregiverThumbnail = "https://via.placeholder.com/100";
+                const newCaregiver = {
+                    id: caregivers.length + 1,
+                    name,
+                    role,
+                    rating,
+                    experience,
+                    image: newCaregiverThumbnail
+                };
+
+                caregivers.push(newCaregiever);
+                renderCaregivers(caregivers);
+                modal.style.display = "none";
+                showMessage(`New caregiver ${name} has been added successfully!`);
+
+                // Clear the form
+                document.getElementById('new-name').value = '';
+                document.getElementById('new-role').value = '';
+                document.getElementById('new-rating').value = '';
+                document.getElementById('new-experience').value = '';
+            } else {
+                alert('Please fill in all fields');
+            }
+        });
+
+        renderCaregivers(caregivers);
+    </script>
+</body>
+</html>
